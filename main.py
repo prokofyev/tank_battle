@@ -2,6 +2,33 @@ import pygame
 import os
 import math
 
+class Projectile:
+    def __init__(self, x, y, angle, speed=5):
+        self.position = pygame.math.Vector2(x, y)
+        self.angle = angle
+        self.speed = speed
+        self.distance_traveled = 0
+        self.max_distance = 500
+        self.image = pygame.image.load(os.path.join('img', 'shell.png'))
+        self.image = pygame.transform.flip(self.image, flip_x=False, flip_y=True)
+        self.image = pygame.transform.scale(self.image, 
+            (int(self.image.get_width() * 0.1), int(self.image.get_height() * 0.1)))
+
+    def update(self):
+        radians = math.radians(-self.angle)
+        movement = pygame.math.Vector2(
+            self.speed * math.cos(radians),
+            self.speed * math.sin(radians)
+        )
+        self.position += movement
+        self.distance_traveled += movement.length()
+        return self.distance_traveled <= self.max_distance
+
+    def draw(self, screen):
+        rotated_shell = pygame.transform.rotate(self.image, self.angle + 90)
+        shell_rect = rotated_shell.get_rect(center=self.position)
+        screen.blit(rotated_shell, shell_rect)
+
 class Tank:
     def __init__(self, x, y):
         self.position = pygame.math.Vector2(x, y)
@@ -16,6 +43,9 @@ class Tank:
         self.flash_duration = 50  # milliseconds
         self.recoil_speed = 0
         self.recoil_force = -0.5  # Negative because it pushes tank backwards
+        self.projectiles = []
+        self.last_shot_time = 0
+        self.shot_cooldown = 2000  # 2000 milliseconds = 2 seconds
         self.load_images()
 
     def load_images(self):
@@ -64,6 +94,8 @@ class Tank:
             self.recoil_speed = min(0, self.recoil_speed + self.deceleration)
 
     def handle_input(self, keys):
+        current_time = pygame.time.get_ticks()
+
         if keys[pygame.K_LEFT]:
             self.body_angle += 0.5
         if keys[pygame.K_RIGHT]:
@@ -73,10 +105,21 @@ class Tank:
             self.turret_angle += 1.5
         if keys[pygame.K_e] or keys[pygame.K_d]:
             self.turret_angle -= 1.5
-        if keys[pygame.K_w]:
+        if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown:
             self.flash_visible = True
-            self.flash_start_time = pygame.time.get_ticks()
+            self.flash_start_time = current_time
+            self.last_shot_time = current_time
             self.recoil_speed = self.recoil_force  # Apply recoil force when firing
+
+            # Create new projectile at turret position
+            angle_rad = math.radians(-(self.body_angle + self.turret_angle + 90))
+            SHELL_OFFSET = 60
+            shell_pos = self.position + pygame.math.Vector2(
+                SHELL_OFFSET * math.cos(angle_rad),
+                SHELL_OFFSET * math.sin(angle_rad)
+            )
+            self.projectiles.append(Projectile(shell_pos.x, shell_pos.y, 
+                                             self.body_angle + self.turret_angle + 90))
 
         # Update flash visibility
         if self.flash_visible and pygame.time.get_ticks() - self.flash_start_time > self.flash_duration:
@@ -95,6 +138,10 @@ class Tank:
         elif self.position.y < 0:
             self.position.y = screen_height
         self.rect.center = (round(self.position.x), round(self.position.y))
+
+    def update(self):
+        # Update projectiles and remove those that have traveled max distance
+        self.projectiles = [proj for proj in self.projectiles if proj.update()]
 
     def draw(self, screen):
         # Draw body
@@ -125,6 +172,10 @@ class Tank:
             flash_rect = rotated_flash.get_rect(center=flash_pos)
             screen.blit(rotated_flash, flash_rect)
 
+        # Draw projectiles
+        for projectile in self.projectiles:
+            projectile.draw(screen)
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -142,6 +193,7 @@ class Game:
 
             keys = pygame.key.get_pressed()
             running = self.tank.handle_input(keys)
+            self.tank.update()  # Add this line
             self.tank.handle_screen_wrap(self.width, self.height)
             
             self.screen.fill((0, 0, 0))
