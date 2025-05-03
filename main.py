@@ -3,25 +3,33 @@ import os
 import math
 
 class Projectile:
-    def __init__(self, x, y, angle, speed=5):
+    def __init__(self, x, y, angle, tank_speed, body_angle, speed=5):
         self.position = pygame.math.Vector2(x, y)
         self.angle = angle
         self.speed = speed
+        
+        # Add tank's velocity to projectile
+        radians = math.radians(-angle) 
+        tank_radians = math.radians(-body_angle) 
+        self.velocity = pygame.math.Vector2(
+            speed  * math.cos(radians),
+            speed  * math.sin(radians)
+        ) + pygame.math.Vector2(
+            tank_speed * math.cos(tank_radians),
+            tank_speed * math.sin(tank_radians)
+        )
+        
         self.distance_traveled = 0
         self.max_distance = 500
+
         self.image = pygame.image.load(os.path.join('img', 'shell.png'))
         self.image = pygame.transform.flip(self.image, flip_x=False, flip_y=True)
         self.image = pygame.transform.scale(self.image, 
             (int(self.image.get_width() * 0.1), int(self.image.get_height() * 0.1)))
 
     def update(self):
-        radians = math.radians(-self.angle)
-        movement = pygame.math.Vector2(
-            self.speed * math.cos(radians),
-            self.speed * math.sin(radians)
-        )
-        self.position += movement
-        self.distance_traveled += movement.length()
+        self.position += self.velocity
+        self.distance_traveled += self.velocity.length()
         return self.distance_traveled <= self.max_distance
 
     def draw(self, screen):
@@ -105,6 +113,7 @@ class Tank:
             self.turret_angle += 1.5
         if keys[pygame.K_e] or keys[pygame.K_d]:
             self.turret_angle -= 1.5
+
         if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown:
             self.flash_visible = True
             self.flash_start_time = current_time
@@ -119,7 +128,8 @@ class Tank:
                 SHELL_OFFSET * math.sin(angle_rad)
             )
             self.projectiles.append(Projectile(shell_pos.x, shell_pos.y, 
-                                             self.body_angle + self.turret_angle + 90))
+                                             self.body_angle + self.turret_angle + 90,
+                                             self.current_speed, self.body_angle))
 
         # Update flash visibility
         if self.flash_visible and pygame.time.get_ticks() - self.flash_start_time > self.flash_duration:
