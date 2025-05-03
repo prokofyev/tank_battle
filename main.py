@@ -11,6 +11,11 @@ class Tank:
         self.deceleration = 0.05
         self.body_angle = 0
         self.turret_angle = 0
+        self.flash_visible = False
+        self.flash_start_time = 0
+        self.flash_duration = 50  # milliseconds
+        self.recoil_speed = 0
+        self.recoil_force = -0.5  # Negative because it pushes tank backwards
         self.load_images()
 
     def load_images(self):
@@ -22,22 +27,12 @@ class Tank:
         self.turret_image = pygame.transform.scale(self.turret_image, 
             (int(self.turret_image.get_width() * 0.4), int(self.turret_image.get_height() * 0.4)))
         
+        self.flash_image = pygame.image.load(os.path.join('img', 'fire.png'))
+        self.flash_image = pygame.transform.scale(self.flash_image, 
+            (int(self.flash_image.get_width() * 0.4), int(self.flash_image.get_height() * 0.4)))
+        
         self.rect = self.body_image.get_rect()
         self.rect.center = (round(self.position.x), round(self.position.y))
-
-    def handle_input(self, keys):
-        if keys[pygame.K_LEFT]:
-            self.body_angle += 0.5
-        if keys[pygame.K_RIGHT]:
-            self.body_angle -= 0.5
-        
-        if keys[pygame.K_q]:
-            self.turret_angle += 1.5
-        if keys[pygame.K_e]:
-            self.turret_angle -= 1.5
-
-        self._handle_movement(keys)
-        return not keys[pygame.K_ESCAPE]
 
     def _handle_movement(self, keys):
         if keys[pygame.K_UP]:
@@ -50,13 +45,45 @@ class Tank:
             elif self.current_speed < 0:
                 self.current_speed = min(0, self.current_speed + self.deceleration)
 
-        if self.current_speed != 0:
-            radians = math.radians(-self.body_angle)
-            self.position += pygame.math.Vector2(
-                self.current_speed * math.cos(radians),
-                self.current_speed * math.sin(radians)
-            )
-            self.rect.center = (round(self.position.x), round(self.position.y))
+        radians = math.radians(-self.body_angle)
+        self.position += pygame.math.Vector2(
+            self.current_speed * math.cos(radians),
+            self.current_speed * math.sin(radians)
+        )
+
+        radians = math.radians(-self.body_angle - self.turret_angle - 90)
+        self.position += pygame.math.Vector2(
+            self.recoil_speed * math.cos(radians),
+            self.recoil_speed * math.sin(radians)
+        )
+
+        self.rect.center = (round(self.position.x), round(self.position.y))
+    
+    # Gradually reduce recoil
+        if self.recoil_speed < 0:
+            self.recoil_speed = min(0, self.recoil_speed + self.deceleration)
+
+    def handle_input(self, keys):
+        if keys[pygame.K_LEFT]:
+            self.body_angle += 0.5
+        if keys[pygame.K_RIGHT]:
+            self.body_angle -= 0.5
+        
+        if keys[pygame.K_q] or keys[pygame.K_a]:
+            self.turret_angle += 1.5
+        if keys[pygame.K_e] or keys[pygame.K_d]:
+            self.turret_angle -= 1.5
+        if keys[pygame.K_w]:
+            self.flash_visible = True
+            self.flash_start_time = pygame.time.get_ticks()
+            self.recoil_speed = self.recoil_force  # Apply recoil force when firing
+
+        # Update flash visibility
+        if self.flash_visible and pygame.time.get_ticks() - self.flash_start_time > self.flash_duration:
+            self.flash_visible = False
+        
+        self._handle_movement(keys)
+        return not keys[pygame.K_ESCAPE]
 
     def handle_screen_wrap(self, screen_width, screen_height):
         if self.position.x > screen_width:
@@ -84,6 +111,19 @@ class Tank:
         turret_pos = self.position + offset
         turret_rect = rotated_turret.get_rect(center=turret_pos)
         screen.blit(rotated_turret, turret_rect)
+        
+        # Draw muzzle flash if active
+        if self.flash_visible:
+            angle_rad = math.radians(-(self.body_angle + self.turret_angle + 90))
+            
+            FLASH_OFFSET = 90
+            flash_offset = pygame.math.Vector2(FLASH_OFFSET * math.cos(angle_rad), FLASH_OFFSET * math.sin(angle_rad))
+            
+            rotated_flash = pygame.transform.rotate(self.flash_image, 
+                                                  self.body_angle + self.turret_angle + 90)
+            flash_pos = self.position + flash_offset
+            flash_rect = rotated_flash.get_rect(center=flash_pos)
+            screen.blit(rotated_flash, flash_rect)
 
 class Game:
     def __init__(self):
