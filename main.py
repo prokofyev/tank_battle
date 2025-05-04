@@ -8,7 +8,12 @@ class Game:
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.width, self.height = self.screen.get_size()
         pygame.display.set_caption("Tank Battle")
-        self.tank = Tank(self.width // 2, self.height // 2)
+        
+        # Create two tanks in opposite corners
+        self.player_tank = Tank(300, 300)  # Top-left corner
+        self.enemy_tank = Tank(self.width - 300, self.height - 300)  # Bottom-right corner
+        self.enemy_tank.body_angle = 90  # Rotate enemy tank to face player
+        
         self.projectiles = []
         self.explosions = []
 
@@ -45,16 +50,17 @@ class Game:
             if keys[pygame.K_ESCAPE]:
                 running = False
 
-            new_projectile = self.tank.handle_input(keys)
+            new_projectile = self.player_tank.handle_input(keys)
             if new_projectile:
                 self.projectiles.append(new_projectile)
                 
             self.update_projectiles()
             self.update_explosions()
-            self.tank.handle_screen_wrap(self.width, self.height)
+            self.player_tank.handle_screen_wrap(self.width, self.height)
             
             self.screen.fill((0, 0, 0))
-            self.tank.draw(self.screen)
+            self.player_tank.draw(self.screen)
+            self.enemy_tank.draw(self.screen)
             self.draw_projectiles()
             self.draw_explosions()
             pygame.display.flip()
