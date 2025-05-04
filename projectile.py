@@ -13,6 +13,7 @@ class Projectile:
         self.distance_traveled = 0
         self.velocity = self._calculate_velocity(angle, speed, body_angle, tank_speed)
         self.image = self._load_shell_image()
+        self.explosion_sound = pygame.mixer.Sound(os.path.join('sound', 'explosion.mp3'))
 
     def _calculate_velocity(self, angle, speed, body_angle, tank_speed):
         # Calculate shell velocity

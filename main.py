@@ -36,6 +36,7 @@ class Game:
             else:
                 # Create explosion at projectile's last position
                 self.explosions.append(Explosion(proj.position.x, proj.position.y))
+                proj.explosion_sound.play()  # Play sound when firing
         self.projectiles = active_projectiles
 
     def update_explosions(self):
