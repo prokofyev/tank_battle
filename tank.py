@@ -17,7 +17,6 @@ class Tank:
         self.flash_duration = 50  # milliseconds
         self.recoil_speed = 0
         self.recoil_force = -0.5  # Negative because it pushes tank backwards
-        self.projectiles = []
         self.last_shot_time = 0
         self.shot_cooldown = 2000  # 2000 milliseconds = 2 seconds
         self.load_images()
@@ -80,6 +79,7 @@ class Tank:
         if keys[pygame.K_e] or keys[pygame.K_d]:
             self.turret_angle -= 1.5
 
+        new_projectile = None
         if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown:
             self.flash_visible = True
             self.flash_start_time = current_time
@@ -93,16 +93,16 @@ class Tank:
                 SHELL_OFFSET * math.cos(angle_rad),
                 SHELL_OFFSET * math.sin(angle_rad)
             )
-            self.projectiles.append(Projectile(shell_pos.x, shell_pos.y, 
+            new_projectile = Projectile(shell_pos.x, shell_pos.y, 
                                              self.body_angle + self.turret_angle + 90,
-                                             self.current_speed, self.body_angle))
+                                             self.current_speed, self.body_angle)
 
         # Update flash visibility
         if self.flash_visible and pygame.time.get_ticks() - self.flash_start_time > self.flash_duration:
             self.flash_visible = False
         
         self._handle_movement(keys)
-        return not keys[pygame.K_ESCAPE]
+        return new_projectile
 
     def handle_screen_wrap(self, screen_width, screen_height):
         if self.position.x > screen_width:
@@ -114,10 +114,6 @@ class Tank:
         elif self.position.y < 0:
             self.position.y = screen_height
         self.rect.center = (round(self.position.x), round(self.position.y))
-
-    def update(self):
-        # Update projectiles and remove those that have traveled max distance
-        self.projectiles = [proj for proj in self.projectiles if proj.update()]
 
     def draw(self, screen):
         # Draw body
@@ -147,7 +143,3 @@ class Tank:
             flash_pos = self.position + flash_offset
             flash_rect = rotated_flash.get_rect(center=flash_pos)
             screen.blit(rotated_flash, flash_rect)
-
-        # Draw projectiles
-        for projectile in self.projectiles:
-            projectile.draw(screen)
