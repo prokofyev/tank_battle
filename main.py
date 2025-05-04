@@ -9,10 +9,11 @@ class Game:
         self.width, self.height = self.screen.get_size()
         pygame.display.set_caption("Tank Battle")
         
-        # Create two tanks in opposite corners
-        self.player_tank = Tank(300, 300)  # Top-left corner
-        self.enemy_tank = Tank(self.width - 300, self.height - 300)  # Bottom-right corner
-        self.enemy_tank.body_angle = 90  # Rotate enemy tank to face player
+        # Create two tanks with different sprites
+        self.player_tank = Tank(300, 300, 'tank.png', 'turret.png')
+        self.enemy_tank = Tank(self.width - 300, self.height - 300, 
+                             'tank2.png', 'turret2.png')
+        self.enemy_tank.body_angle = 90
         
         self.projectiles = []
         self.explosions = []

@@ -4,8 +4,10 @@ import os
 from projectile import Projectile
 
 class Tank:
-    def __init__(self, x, y):
+    def __init__(self, x, y, tank_img='tank.png', turret_img='turret.png'):
         self.position = pygame.math.Vector2(x, y)
+        self.tank_img = tank_img
+        self.turret_img = turret_img
         self.current_speed = 0
         self.max_speed = 1
         self.acceleration = 0.1
@@ -22,11 +24,11 @@ class Tank:
         self.load_images()
 
     def load_images(self):
-        self.body_image = pygame.image.load(os.path.join('img', 'tank.png'))
+        self.body_image = pygame.image.load(os.path.join('img', self.tank_img))
         self.body_image = pygame.transform.scale(self.body_image, 
             (int(self.body_image.get_width() * 0.4), int(self.body_image.get_height() * 0.4)))
         
-        self.turret_image = pygame.image.load(os.path.join('img', 'turret.png'))
+        self.turret_image = pygame.image.load(os.path.join('img', self.turret_img))
         self.turret_image = pygame.transform.scale(self.turret_image, 
             (int(self.turret_image.get_width() * 0.4), int(self.turret_image.get_height() * 0.4)))
         
