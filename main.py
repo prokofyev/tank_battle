@@ -16,11 +16,20 @@ class Game:
         
         self.projectiles = []
         self.explosions = []
+        self.tank_hit_radius = 40  # Collision detection radius for tanks
+
+    def check_projectile_collision(self, projectile):
+        # Check collision with both tanks
+        for tank in [self.player_tank, self.enemy_tank]:
+            distance = (tank.position - projectile.position).length()
+            if distance < self.tank_hit_radius:
+                return True
+        return False
 
     def update_projectiles(self):
         active_projectiles = []
         for proj in self.projectiles:
-            if proj.update():
+            if proj.update() and not self.check_projectile_collision(proj):
                 active_projectiles.append(proj)
             else:
                 # Create explosion at projectile's last position

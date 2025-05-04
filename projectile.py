@@ -5,7 +5,7 @@ from pygame.math import Vector2
 
 class Projectile:
     SHELL_SCALE = 0.1
-    MAX_DISTANCE = 500
+    MAX_DISTANCE = 1000
 
     def __init__(self, x, y, angle, tank_speed, body_angle, speed=5):
         self.position = Vector2(x, y)
