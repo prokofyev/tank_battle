@@ -22,6 +22,7 @@ class Tank:
         self.last_shot_time = 0
         self.shot_cooldown = 2000  # 2000 milliseconds = 2 seconds
         self.load_images()
+        self.fire_sound = pygame.mixer.Sound(os.path.join('sound', 'fire.mp3'))
 
     def load_images(self):
         self.body_image = pygame.image.load(os.path.join('img', self.tank_img))
@@ -83,6 +84,7 @@ class Tank:
 
         new_projectile = None
         if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown:
+            self.fire_sound.play()  # Play sound when firing
             self.flash_visible = True
             self.flash_start_time = current_time
             self.last_shot_time = current_time

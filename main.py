@@ -5,6 +5,7 @@ from explosion import Explosion
 class Game:
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()  # Initialize sound system
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.width, self.height = self.screen.get_size()
         pygame.display.set_caption("Tank Battle")
