@@ -1,5 +1,6 @@
 import pygame
 from tank import Tank
+from explosion import Explosion
 
 class Game:
     def __init__(self):
@@ -9,13 +10,28 @@ class Game:
         pygame.display.set_caption("Tank Battle")
         self.tank = Tank(self.width // 2, self.height // 2)
         self.projectiles = []
+        self.explosions = []
 
     def update_projectiles(self):
-        self.projectiles = [proj for proj in self.projectiles if proj.update()]
+        active_projectiles = []
+        for proj in self.projectiles:
+            if proj.update():
+                active_projectiles.append(proj)
+            else:
+                # Create explosion at projectile's last position
+                self.explosions.append(Explosion(proj.position.x, proj.position.y))
+        self.projectiles = active_projectiles
+
+    def update_explosions(self):
+        self.explosions = [exp for exp in self.explosions if not exp.should_remove()]
 
     def draw_projectiles(self):
         for projectile in self.projectiles:
             projectile.draw(self.screen)
+
+    def draw_explosions(self):
+        for explosion in self.explosions:
+            explosion.draw(self.screen)
 
     def run(self):
         running = True
@@ -34,11 +50,13 @@ class Game:
                 self.projectiles.append(new_projectile)
                 
             self.update_projectiles()
+            self.update_explosions()
             self.tank.handle_screen_wrap(self.width, self.height)
             
             self.screen.fill((0, 0, 0))
             self.tank.draw(self.screen)
             self.draw_projectiles()
+            self.draw_explosions()
             pygame.display.flip()
 
         pygame.quit()
