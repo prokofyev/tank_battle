@@ -23,6 +23,9 @@ class Tank:
         self.shot_cooldown = 2000  # 2000 milliseconds = 2 seconds
         self.load_images()
         self.fire_sound = pygame.mixer.Sound(os.path.join('sound', 'fire.mp3'))
+        self.push_speed = 0
+        self.push_direction = None
+        self.push_deceleration = 0.05
 
     def load_images(self):
         self.body_image = pygame.image.load(os.path.join('img', self.tank_img))
@@ -40,7 +43,55 @@ class Tank:
         self.rect = self.body_image.get_rect()
         self.rect.center = (round(self.position.x), round(self.position.y))
 
-    def _handle_movement(self, keys):
+    def update_position(self, width, height):
+        # Apply forward/backward movement
+        radians = math.radians(-self.body_angle)
+        self.position += pygame.math.Vector2(
+            self.current_speed * math.cos(radians),
+            self.current_speed * math.sin(radians)
+        )
+
+        # Apply recoil movement
+        radians = math.radians(-self.body_angle - self.turret_angle - 90)
+        self.position += pygame.math.Vector2(
+            self.recoil_speed * math.cos(radians),
+            self.recoil_speed * math.sin(radians)
+        )
+
+        # Apply push movement
+        if self.push_direction:
+            radians = math.atan2(self.push_direction.y, self.push_direction.x)
+            self.position += pygame.math.Vector2(
+                self.push_speed * math.cos(radians),
+                self.push_speed * math.sin(radians)
+            )
+
+        # Update rectangle position
+        self.rect.center = (round(self.position.x), round(self.position.y))
+        
+        # Reduce speeds
+        if self.push_speed != 0:
+            if self.push_speed > 0:
+                self.push_speed = max(0, self.push_speed - self.push_deceleration)
+            else:
+                self.push_speed = min(0, self.push_speed + self.push_deceleration)
+
+        if self.recoil_speed < 0:
+            self.recoil_speed = min(0, self.recoil_speed + self.deceleration)
+
+         # Update flash visibility
+        if self.flash_visible and pygame.time.get_ticks() - self.flash_start_time > self.flash_duration:
+            self.flash_visible = False
+
+        self.handle_screen_wrap(width, height)
+        
+    def apply_push(self, direction, strength):
+        self.push_speed = strength
+        self.push_direction = direction
+    
+    def handle_input(self, keys):
+        current_time = pygame.time.get_ticks()
+
         if keys[pygame.K_UP]:
             self.current_speed = min(self.current_speed + self.acceleration, self.max_speed)
         elif keys[pygame.K_DOWN]:
@@ -50,27 +101,6 @@ class Tank:
                 self.current_speed = max(0, self.current_speed - self.deceleration)
             elif self.current_speed < 0:
                 self.current_speed = min(0, self.current_speed + self.deceleration)
-
-        radians = math.radians(-self.body_angle)
-        self.position += pygame.math.Vector2(
-            self.current_speed * math.cos(radians),
-            self.current_speed * math.sin(radians)
-        )
-
-        radians = math.radians(-self.body_angle - self.turret_angle - 90)
-        self.position += pygame.math.Vector2(
-            self.recoil_speed * math.cos(radians),
-            self.recoil_speed * math.sin(radians)
-        )
-
-        self.rect.center = (round(self.position.x), round(self.position.y))
-    
-    # Gradually reduce recoil
-        if self.recoil_speed < 0:
-            self.recoil_speed = min(0, self.recoil_speed + self.deceleration)
-
-    def handle_input(self, keys):
-        current_time = pygame.time.get_ticks()
 
         if keys[pygame.K_LEFT]:
             self.body_angle += 0.5
@@ -101,11 +131,6 @@ class Tank:
                                              self.body_angle + self.turret_angle + 90,
                                              self.current_speed, self.body_angle)
 
-        # Update flash visibility
-        if self.flash_visible and pygame.time.get_ticks() - self.flash_start_time > self.flash_duration:
-            self.flash_visible = False
-        
-        self._handle_movement(keys)
         return new_projectile
 
     def handle_screen_wrap(self, screen_width, screen_height):

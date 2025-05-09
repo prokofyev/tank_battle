@@ -50,6 +50,20 @@ class Game:
         for explosion in self.explosions:
             explosion.draw(self.screen)
 
+    def check_tank_collision(self):
+        tank_distance = (self.player_tank.position - self.enemy_tank.position).length()
+        min_distance = 100
+        if tank_distance < min_distance:
+            # Calculate collision direction and strength
+            direction = (self.player_tank.position - self.enemy_tank.position).normalize()
+            push_strength = 2.0
+            
+            # Apply push to both tanks
+            self.enemy_tank.apply_push(-direction, push_strength)
+            self.player_tank.apply_push(direction, push_strength)
+            return True
+        return False
+
     def run(self):
         running = True
         while running:
@@ -65,9 +79,15 @@ class Game:
             new_projectile = self.player_tank.handle_input(keys)
             if new_projectile:
                 self.projectiles.append(new_projectile)
+            
+            # Check and handle tank collisions
+            self.check_tank_collision()
                 
             self.update_projectiles()
             self.update_explosions()
+            self.player_tank.update_position(self.width, self.height)
+            self.enemy_tank.update_position(self.width, self.height)
+
             self.player_tank.handle_screen_wrap(self.width, self.height)
             
             self.screen.fill((0, 0, 0))
