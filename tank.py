@@ -3,26 +3,38 @@ import math
 import os
 from projectile import Projectile
 
+
 class Tank:
     def __init__(self, x, y, tank_img='tank.png', turret_img='turret.png'):
         self.position = pygame.math.Vector2(x, y)
         self.tank_img = tank_img
         self.turret_img = turret_img
         self.current_speed = 0
-        self.max_speed = 1
+        self.max_speed = 0.5
+        self.last_body_angle = 0
         self.acceleration = 0.1
-        self.deceleration = 0.05
+        self.deceleration = 0.005
         self.body_angle = 0
         self.turret_angle = 0
         self.flash_visible = False
         self.flash_start_time = 0
         self.flash_duration = 50  # milliseconds
         self.recoil_speed = 0
-        self.recoil_force = -0.5  # Negative because it pushes tank backwards
+        self.recoil_force = -0.1  # Negative because it pushes tank backwards
         self.last_shot_time = 0
         self.shot_cooldown = 2000  # 2000 milliseconds = 2 seconds
         self.load_images()
         self.fire_sound = pygame.mixer.Sound(os.path.join('sound', 'fire.mp3'))
+        self.track_sound = pygame.mixer.Sound(os.path.join('sound', 'track.mp3'))
+        self.track_sound.set_volume(0.0)
+        self.track_sound_playing = False
+        self.track_sound_volume = 0.0  # Текущая громкость гусениц (0..1)
+        self.track_sound_target_volume = 0.5  # Целевая громкость при движении
+        self.track_sound_fade_speed = 0.05  # Скорость изменения громкости
+        self.engine_sound = pygame.mixer.Sound(os.path.join('sound', 'engine.mp3'))
+        self.engine_sound.set_volume(0.05)
+        self.engine_sound.play(-1)  # Включаем звук двигателя при создании танка
+        self.engine_sound_playing = True
         self.push_speed = 0
         self.push_direction = None
         self.push_deceleration = 0.05
@@ -42,6 +54,32 @@ class Tank:
         
         self.rect = self.body_image.get_rect()
         self.rect.center = (round(self.position.x), round(self.position.y))
+
+    def _update_sounds(self):
+        # Плавное изменение громкости гусениц
+        if abs(self.current_speed) > 0.01 or self.last_body_angle != self.body_angle:  # Если танк движется
+            if not self.track_sound_playing:
+                self.track_sound.play(-1)
+                self.track_sound_playing = True
+            # Плавное увеличение громкости до целевой
+            if self.track_sound_volume < self.track_sound_target_volume:
+                self.track_sound_volume = min(
+                    self.track_sound_volume + self.track_sound_fade_speed,
+                    self.track_sound_target_volume
+                )
+                self.track_sound.set_volume(self.track_sound_volume)
+        else:  # Если танк стоит
+            # Плавное уменьшение громкости
+            if self.track_sound_volume > 0:
+                self.track_sound_volume = max(
+                    0,
+                    self.track_sound_volume - self.track_sound_fade_speed
+                )
+                self.track_sound.set_volume(self.track_sound_volume)
+            else:
+                if self.track_sound_playing:
+                    self.track_sound.stop()
+                    self.track_sound_playing = False
 
     def update_position(self, width, height):
         # Apply forward/backward movement
@@ -68,7 +106,7 @@ class Tank:
 
         # Update rectangle position
         self.rect.center = (round(self.position.x), round(self.position.y))
-        
+
         # Reduce speeds
         if self.push_speed != 0:
             if self.push_speed > 0:
@@ -79,16 +117,16 @@ class Tank:
         if self.recoil_speed < 0:
             self.recoil_speed = min(0, self.recoil_speed + self.deceleration)
 
-         # Update flash visibility
+        # Update flash visibility
         if self.flash_visible and pygame.time.get_ticks() - self.flash_start_time > self.flash_duration:
             self.flash_visible = False
 
         self.handle_screen_wrap(width, height)
-        
+
     def apply_push(self, direction, strength):
         self.push_speed = strength
         self.push_direction = direction
-    
+
     def handle_input(self, keys):
         current_time = pygame.time.get_ticks()
 
@@ -103,14 +141,18 @@ class Tank:
                 self.current_speed = min(0, self.current_speed + self.deceleration)
 
         if keys[pygame.K_LEFT]:
-            self.body_angle += 0.5
+            self.body_angle += 0.2
         if keys[pygame.K_RIGHT]:
-            self.body_angle -= 0.5
-        
+            self.body_angle -= 0.2
+
+        self._update_sounds()
+
+        self.last_body_angle = self.body_angle
+
         if keys[pygame.K_q] or keys[pygame.K_a]:
-            self.turret_angle += 1.5
+            self.turret_angle += 0.2
         if keys[pygame.K_e] or keys[pygame.K_d]:
-            self.turret_angle -= 1.5
+            self.turret_angle -= 0.2
 
         new_projectile = None
         if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown:
@@ -159,16 +201,23 @@ class Tank:
         turret_pos = self.position + offset
         turret_rect = rotated_turret.get_rect(center=turret_pos)
         screen.blit(rotated_turret, turret_rect)
-        
+
         # Draw muzzle flash if active
         if self.flash_visible:
             angle_rad = math.radians(-(self.body_angle + self.turret_angle + 90))
-            
+
             FLASH_OFFSET = 90
             flash_offset = pygame.math.Vector2(FLASH_OFFSET * math.cos(angle_rad), FLASH_OFFSET * math.sin(angle_rad))
-            
-            rotated_flash = pygame.transform.rotate(self.flash_image, 
-                                                  self.body_angle + self.turret_angle + 90)
+
+            rotated_flash = pygame.transform.rotate(self.flash_image,
+                                                    self.body_angle + self.turret_angle + 90)
             flash_pos = self.position + flash_offset
             flash_rect = rotated_flash.get_rect(center=flash_pos)
             screen.blit(rotated_flash, flash_rect)
+
+    def __del__(self):
+        # Останавливаем все звуки при удалении объекта
+        if self.track_sound_playing:
+            self.track_sound.stop()
+        if self.engine_sound_playing:
+            self.engine_sound.stop()
