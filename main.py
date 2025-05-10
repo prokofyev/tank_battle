@@ -91,8 +91,10 @@ class Game:
             self.player_tank.handle_screen_wrap(self.width, self.height)
             
             self.screen.fill((0, 0, 0))
-            self.player_tank.draw(self.screen)
-            self.enemy_tank.draw(self.screen)
+            self.player_tank.draw_body(self.screen)
+            self.enemy_tank.draw_body(self.screen)
+            self.player_tank.draw_turret(self.screen)
+            self.enemy_tank.draw_turret(self.screen)
             self.draw_projectiles()
             self.draw_explosions()
             pygame.display.flip()

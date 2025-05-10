@@ -186,12 +186,13 @@ class Tank:
             self.position.y = screen_height
         self.rect.center = (round(self.position.x), round(self.position.y))
 
-    def draw(self, screen):
+    def draw_body(self, screen):
         # Draw body
         rotated_body = pygame.transform.rotate(self.body_image, self.body_angle + 90)
         rotated_body_rect = rotated_body.get_rect(center=self.rect.center)
         screen.blit(rotated_body, rotated_body_rect)
-        
+
+    def draw_turret(self, screen):
         # Draw turret
         angle_rad = math.radians(-(self.body_angle + self.turret_angle + 90))
         offset = pygame.math.Vector2(20 * math.cos(angle_rad), 20 * math.sin(angle_rad))
