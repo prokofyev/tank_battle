@@ -56,7 +56,7 @@ class Game:
         if tank_distance < min_distance:
             # Calculate collision direction and strength
             direction = (self.player_tank.position - self.enemy_tank.position).normalize()
-            push_strength = 2.0
+            push_strength = 0.9
             
             # Apply push to both tanks
             self.enemy_tank.apply_push(-direction, push_strength)

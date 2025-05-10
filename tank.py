@@ -150,9 +150,9 @@ class Tank:
         self.last_body_angle = self.body_angle
 
         if keys[pygame.K_q] or keys[pygame.K_a]:
-            self.turret_angle += 0.2
+            self.turret_angle += 0.3
         if keys[pygame.K_e] or keys[pygame.K_d]:
-            self.turret_angle -= 0.2
+            self.turret_angle -= 0.3
 
         new_projectile = None
         if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown:
