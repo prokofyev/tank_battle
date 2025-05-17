@@ -16,7 +16,7 @@ class Tank:
         self.acceleration = 0.1
         self.deceleration = 0.005
         self.body_angle = 0
-        self.turret_angle = 0
+        self.turret_angle = -90
         self.flash_visible = False
         self.flash_start_time = 0
         self.flash_duration = 50  # milliseconds
@@ -302,13 +302,6 @@ class Tank:
             for explosion in self.death_explosions:
                 rect = explosion['image'].get_rect(center=explosion['pos'])
                 screen.blit(explosion['image'], rect)
-
-    def take_damage(self):
-        damage = random.randint(70, 130)
-        self.health = max(0, self.health - damage)
-        if self.health == 0 and not self.is_dying:
-            self.start_death_sequence()
-        return damage
 
     def start_death_sequence(self):
         self.is_dying = True

@@ -15,7 +15,7 @@ class Game:
         self.player_tank = Tank(300, 300, 'tank.png', 'turret.png')
         self.enemy_tank = Tank(self.width - 300, self.height - 300, 
                              'tank2.png', 'turret2.png')
-        self.enemy_tank.body_angle = 90
+        self.enemy_tank.body_angle = 180
         
         self.projectiles = []
         self.explosions = []
@@ -24,15 +24,19 @@ class Game:
         self.victory_duration = 3000  # 3 seconds in milliseconds
         self.victory_font = pygame.font.Font(os.path.join('fonts', 'army_rust.ttf'), 250)
         self.show_victory = False
-        
+        self.game_over_start_time = 0
+        self.game_over_duration = 3000  # 3 seconds
+        self.show_game_over = False
+
     def reset_game(self):
         self.player_tank = Tank(300, 300, 'tank.png', 'turret.png')
         self.enemy_tank = Tank(self.width - 300, self.height - 300, 
                              'tank2.png', 'turret2.png')
-        self.enemy_tank.body_angle = 90
+        self.enemy_tank.body_angle = 180
         self.projectiles = []
         self.explosions = []
         self.show_victory = False
+        self.show_game_over = False
 
     def draw_victory_message(self):
         if not self.show_victory:
@@ -44,6 +48,19 @@ class Game:
             return
             
         text = self.victory_font.render("VICTORY", True, (255, 0, 0))
+        text_rect = text.get_rect(center=(self.width // 2, self.height // 2))
+        self.screen.blit(text, text_rect)
+
+    def draw_game_over_message(self):
+        if not self.show_game_over:
+            return
+            
+        current_time = pygame.time.get_ticks()
+        if current_time - self.game_over_start_time > self.game_over_duration:
+            self.reset_game()
+            return
+            
+        text = self.victory_font.render("GAME OVER", True, (255, 0, 0))
         text_rect = text.get_rect(center=(self.width // 2, self.height // 2))
         self.screen.blit(text, text_rect)
 
@@ -135,9 +152,12 @@ class Game:
             self.enemy_tank.update_death_animation()
             
             # Check for victory condition
-            if self.enemy_tank.health == 0 and not self.show_victory:
+            if self.enemy_tank.health == 0 and not self.show_victory and not self.show_game_over:
                 self.show_victory = True
                 self.victory_start_time = pygame.time.get_ticks()
+            if self.player_tank.health == 0 and not self.show_victory and not self.show_game_over:
+                self.show_game_over = True
+                self.game_over_start_time = pygame.time.get_ticks()
             
             self.screen.fill((0, 0, 0))
             self.player_tank.draw_health_bar(self.screen, 20, 20)
@@ -149,6 +169,7 @@ class Game:
             self.draw_projectiles()
             self.draw_explosions()
             self.draw_victory_message()
+            self.draw_game_over_message()
             pygame.display.flip()
 
         pygame.quit()
