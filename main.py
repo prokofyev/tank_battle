@@ -25,6 +25,7 @@ class Game:
         for tank in [self.player_tank, self.enemy_tank]:
             distance = (tank.position - projectile.position).length()
             if distance < self.tank_hit_radius:
+                tank.take_damage()
                 return True
         return False
 
@@ -90,7 +91,12 @@ class Game:
 
             self.player_tank.handle_screen_wrap(self.width, self.height)
             
+            self.player_tank.update_death_animation()
+            self.enemy_tank.update_death_animation()
+            
             self.screen.fill((0, 0, 0))
+            self.player_tank.draw_health_bar(self.screen, 20, 20)
+            self.enemy_tank.draw_health_bar(self.screen, self.width - 220, 20)
             self.player_tank.draw_body(self.screen)
             self.enemy_tank.draw_body(self.screen)
             self.player_tank.draw_turret(self.screen)
