@@ -56,13 +56,22 @@ class Game:
         tank_distance = (self.player_tank.position - self.enemy_tank.position).length()
         min_distance = 100
         if tank_distance < min_distance:
+            # If either tank is dying (on fire), destroy the other tank
+            if self.player_tank.is_dying:
+                self.enemy_tank.health = 0
+                self.enemy_tank.start_death_sequence()
+            if self.enemy_tank.is_dying:
+                self.player_tank.health = 0
+                self.player_tank.start_death_sequence()
+
             # Calculate collision direction and strength
             direction = (self.player_tank.position - self.enemy_tank.position).normalize()
             push_strength = 0.9
             
-            # Apply collision damage and check for destruction
-            self.player_tank.take_collision_damage()
-            self.enemy_tank.take_collision_damage()
+            # Apply regular collision damage only if tanks aren't dying
+            if not (self.player_tank.is_dying or self.enemy_tank.is_dying):
+                self.player_tank.take_collision_damage()
+                self.enemy_tank.take_collision_damage()
             
             # Apply push to both tanks
             self.enemy_tank.apply_push(-direction, push_strength)
