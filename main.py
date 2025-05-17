@@ -1,6 +1,7 @@
 import pygame
 from tank import Tank
 from explosion import Explosion
+import random
 
 class Game:
     def __init__(self):
@@ -58,6 +59,10 @@ class Game:
             # Calculate collision direction and strength
             direction = (self.player_tank.position - self.enemy_tank.position).normalize()
             push_strength = 0.9
+            
+            # Apply collision damage and check for destruction
+            self.player_tank.take_collision_damage()
+            self.enemy_tank.take_collision_damage()
             
             # Apply push to both tanks
             self.enemy_tank.apply_push(-direction, push_strength)

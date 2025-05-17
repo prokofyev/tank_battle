@@ -237,6 +237,13 @@ class Tank:
             self.start_death_sequence()
         return damage
 
+    def take_collision_damage(self):
+        damage = random.randint(5, 10)
+        self.health = max(0, self.health - damage)
+        if self.health == 0 and not self.is_dying:
+            self.start_death_sequence()
+        return damage
+
     def start_death_sequence(self):
         self.is_dying = True
         self.death_start_time = pygame.time.get_ticks()
