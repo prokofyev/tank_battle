@@ -139,9 +139,9 @@ class Tank:
     def handle_input(self, keys):
         current_time = pygame.time.get_ticks()
 
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_UP] and self.health > 0:
             self.current_speed = min(self.current_speed + self.acceleration, self.max_speed)
-        elif keys[pygame.K_DOWN]:
+        elif keys[pygame.K_DOWN] and self.health > 0:
             self.current_speed = max(self.current_speed - self.acceleration, -self.max_speed)
         else:
             if self.current_speed > 0:
@@ -149,22 +149,23 @@ class Tank:
             elif self.current_speed < 0:
                 self.current_speed = min(0, self.current_speed + self.deceleration)
 
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_LEFT] and self.health > 0:
             self.body_angle += 0.2
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_RIGHT] and self.health > 0:
             self.body_angle -= 0.2
 
         self._update_sounds()
 
         self.last_body_angle = self.body_angle
 
-        if keys[pygame.K_q] or keys[pygame.K_a]:
+        if (keys[pygame.K_q] or keys[pygame.K_a]) and self.health > 0:
             self.turret_angle += 0.3
-        if keys[pygame.K_e] or keys[pygame.K_d]:
+        if (keys[pygame.K_e] or keys[pygame.K_d]) and self.health > 0:
             self.turret_angle -= 0.3
 
         new_projectile = None
-        if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown:
+        if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown \
+                and self.health > 0:
             self.fire_sound.play()  # Play sound when firing
             self.flash_visible = True
             self.flash_start_time = current_time
