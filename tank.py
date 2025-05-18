@@ -304,3 +304,42 @@ class Tank:
             self.track_sound.stop()
         if self.engine_sound_playing:
             self.engine_sound.stop()
+
+    def move_to_target(self, target_pos):
+        if self.health <= 0:
+            self.current_speed = max(self.current_speed - self.deceleration, 0)
+            return False
+
+        # Calculate angle to target
+        direction = target_pos - self.position
+        target_angle = - (math.degrees(math.atan2(direction.y, direction.x)))
+        
+        # Normalize angle difference to -180 to 180
+        angle_diff = (target_angle - self.body_angle) % 360
+        if angle_diff > 180:
+            angle_diff -= 360
+            
+        # Rotate towards target
+        if abs(angle_diff) > 0.5:
+            self.body_angle += 0.3 if angle_diff > 0 else -0.3
+            return False
+            
+        # Move forward if pointing at target
+        self.current_speed = min(self.current_speed + self.acceleration, self.max_speed)
+        return direction.length() < 50  # Return True if reached target
+
+    def aim_turret_at(self, target_pos):
+        if self.health <= 0:
+            return 
+
+        # Calculate angle to target
+        direction = target_pos - self.position
+        target_angle = -(math.degrees(math.atan2(direction.y, direction.x)))
+        
+        # Calculate the shortest rotation direction
+        angle_diff = (target_angle - (self.body_angle + self.turret_angle + 90)) % 360
+        if angle_diff > 180:
+            angle_diff -= 360
+            
+        # Rotate turret towards target
+        self.turret_angle += angle_diff * 0.005

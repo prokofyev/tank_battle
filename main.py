@@ -2,6 +2,7 @@ import pygame
 from tank import Tank
 from explosion import Explosion
 import os
+import random
 
 class Game:
     def __init__(self):
@@ -10,6 +11,9 @@ class Game:
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.width, self.height = self.screen.get_size()
         pygame.display.set_caption("Tank Battle")
+
+        # Debug settings
+        self.DRAW_ENEMY_TANK_DESTINATION = False
         
         # Create two tanks with different sprites
         self.player_tank = Tank(300, 300, 'tank.png', 'turret.png')
@@ -27,6 +31,10 @@ class Game:
         self.game_over_start_time = 0
         self.game_over_duration = 3000  # 3 seconds
         self.show_game_over = False
+        self.enemy_target = pygame.math.Vector2(
+            random.randint(0, self.width),
+            random.randint(0, self.height)
+        )
 
     def reset_game(self):
         self.player_tank = Tank(300, 300, 'tank.png', 'turret.png')
@@ -122,6 +130,17 @@ class Game:
             return True
         return False
 
+    def update_enemy(self):
+         # Update enemy movement
+        if self.enemy_tank.move_to_target(self.enemy_target):
+            # Choose new random target when reached current one
+            self.enemy_target = pygame.math.Vector2(
+                random.randint(0, self.width),
+                random.randint(0, self.height)
+            )
+
+        self.enemy_tank.aim_turret_at(self.player_tank.position)
+
     def run(self):
         running = True
         while running:
@@ -150,6 +169,8 @@ class Game:
             
             self.player_tank.update_death_animation()
             self.enemy_tank.update_death_animation()
+
+            self.update_enemy()
             
             # Check for victory condition
             if self.enemy_tank.health == 0 and not self.show_victory and not self.show_game_over:
@@ -160,19 +181,33 @@ class Game:
                 self.game_over_start_time = pygame.time.get_ticks()
             
             self.screen.fill((0, 0, 0))
-            self.player_tank.draw_health_bar(self.screen, 50, 50)
-            self.enemy_tank.draw_health_bar(self.screen, self.width - 250, 50)
+            self.draw_enemy_destination()  # Add this line before health bars
             self.player_tank.draw_body(self.screen)
             self.enemy_tank.draw_body(self.screen)
             self.player_tank.draw_turret(self.screen)
             self.enemy_tank.draw_turret(self.screen)
             self.draw_projectiles()
             self.draw_explosions()
+            self.player_tank.draw_health_bar(self.screen, 50, 50)
+            self.enemy_tank.draw_health_bar(self.screen, self.width - 250, 50)
             self.draw_victory_message()
             self.draw_game_over_message()
             pygame.display.flip()
 
         pygame.quit()
+
+    def draw_enemy_destination(self):
+            if not self.DRAW_ENEMY_TANK_DESTINATION:
+                return
+                
+            # Draw a red cross at target position
+            cross_size = 20
+            pygame.draw.line(self.screen, (255, 0, 0),
+                            (self.enemy_target.x - cross_size, self.enemy_target.y - cross_size),
+                            (self.enemy_target.x + cross_size, self.enemy_target.y + cross_size), 3)
+            pygame.draw.line(self.screen, (255, 0, 0),
+                            (self.enemy_target.x - cross_size, self.enemy_target.y + cross_size),
+                            (self.enemy_target.x + cross_size, self.enemy_target.y - cross_size), 3)
 
 if __name__ == "__main__":
     game = Game()
