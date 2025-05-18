@@ -232,7 +232,7 @@ class Tank:
                 screen.blit(explosion['image'], rect)
 
     def take_damage(self):
-        damage = random.randint(70, 130)
+        damage = random.randint(30, 50)
         self.health = max(0, self.health - damage)
         if self.health == 0 and not self.is_dying:
             self.start_death_sequence()
@@ -288,65 +288,7 @@ class Tank:
 
     def draw_health_bar(self, screen, x, y):
         bar_width = 200
-        bar_height = 20
-        fill_width = int((self.health / self.max_health) * bar_width)
-        
-        # Draw background
-        pygame.draw.rect(screen, (128, 128, 128), (x, y, bar_width, bar_height))
-        # Draw health
-        pygame.draw.rect(screen, (255, 0, 0), (x, y, fill_width, bar_height))
-        # Draw border
-        pygame.draw.rect(screen, (255, 255, 255), (x, y, bar_width, bar_height), 2)
-
-        if self.is_dying:
-            for explosion in self.death_explosions:
-                rect = explosion['image'].get_rect(center=explosion['pos'])
-                screen.blit(explosion['image'], rect)
-
-    def start_death_sequence(self):
-        self.is_dying = True
-        self.death_start_time = pygame.time.get_ticks()
-        self.explosion_sound.play()
-
-    def update_death_animation(self):
-        if not self.is_dying:
-            return
-        
-        current_time = pygame.time.get_ticks()
-        if current_time - self.death_start_time > self.death_duration:
-            self.is_dying = False
-            return
-
-        # Add new explosion every 100ms
-        if current_time > self.death_next_explosion:
-            self.death_next_explosion = current_time + 100
-            # Random position within tank's rectangle
-            x_offset = random.randint(-30, 30)
-            y_offset = random.randint(-30, 30)
-            pos = self.position + pygame.math.Vector2(x_offset, y_offset)
-            
-            # Random rotation angle
-            rotation_angle = random.randint(0, 360)
-            explosion_img = pygame.transform.scale(
-                pygame.image.load(os.path.join('img', 'fire.png')),
-                (60, 60)
-            )
-            rotated_explosion = pygame.transform.rotate(explosion_img, rotation_angle)
-
-            self.death_explosions.append({
-                'pos': pos,
-                'start_time': current_time,
-                'duration': random.randint(300, 700),
-                'image': rotated_explosion
-            })
-
-        # Update existing explosions
-        self.death_explosions = [exp for exp in self.death_explosions 
-                               if current_time - exp['start_time'] < exp['duration']]
-
-    def draw_health_bar(self, screen, x, y):
-        bar_width = 200
-        bar_height = 20
+        bar_height = 30
         fill_width = int((self.health / self.max_health) * bar_width)
         
         # Draw background

@@ -160,8 +160,8 @@ class Game:
                 self.game_over_start_time = pygame.time.get_ticks()
             
             self.screen.fill((0, 0, 0))
-            self.player_tank.draw_health_bar(self.screen, 20, 20)
-            self.enemy_tank.draw_health_bar(self.screen, self.width - 220, 20)
+            self.player_tank.draw_health_bar(self.screen, 50, 50)
+            self.enemy_tank.draw_health_bar(self.screen, self.width - 250, 50)
             self.player_tank.draw_body(self.screen)
             self.enemy_tank.draw_body(self.screen)
             self.player_tank.draw_turret(self.screen)
