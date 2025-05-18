@@ -155,7 +155,6 @@ class Tank:
             self.body_angle -= 0.2
 
         self._update_sounds()
-
         self.last_body_angle = self.body_angle
 
         if (keys[pygame.K_q] or keys[pygame.K_a]) and self.health > 0:
@@ -163,27 +162,11 @@ class Tank:
         if (keys[pygame.K_e] or keys[pygame.K_d]) and self.health > 0:
             self.turret_angle -= 0.3
 
-        new_projectile = None
-        if keys[pygame.K_w] and current_time - self.last_shot_time >= self.shot_cooldown \
-                and self.health > 0:
-            self.fire_sound.play()  # Play sound when firing
-            self.flash_visible = True
-            self.flash_start_time = current_time
-            self.last_shot_time = current_time
-            self.recoil_speed = self.recoil_force  # Apply recoil force when firing
-
-            # Create new projectile at turret position
-            angle_rad = math.radians(-(self.body_angle + self.turret_angle + 90))
-            SHELL_OFFSET = 60
-            shell_pos = self.position + pygame.math.Vector2(
-                SHELL_OFFSET * math.cos(angle_rad),
-                SHELL_OFFSET * math.sin(angle_rad)
-            )
-            new_projectile = Projectile(shell_pos.x, shell_pos.y, 
-                                             self.body_angle + self.turret_angle + 90,
-                                             self.current_speed, self.body_angle)
-
-        return new_projectile
+        # Use shoot() method for firing
+        if keys[pygame.K_w] and self.health > 0:
+            return self.shoot()
+            
+        return None
 
     def shoot(self):
         current_time = pygame.time.get_ticks()
