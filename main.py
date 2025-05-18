@@ -35,6 +35,7 @@ class Game:
             random.randint(0, self.width),
             random.randint(0, self.height)
         )
+        self.enemy_next_shot = pygame.time.get_ticks() + random.randint(2000, 10000)
 
     def reset_game(self):
         self.player_tank = Tank(300, 300, 'tank.png', 'turret.png')
@@ -133,13 +134,26 @@ class Game:
     def update_enemy(self):
          # Update enemy movement
         if self.enemy_tank.move_to_target(self.enemy_target):
-            # Choose new random target when reached current one
-            self.enemy_target = pygame.math.Vector2(
-                random.randint(0, self.width),
-                random.randint(0, self.height)
-            )
+            # Keep generating new points until we find one far enough
+            while True:
+                new_target = pygame.math.Vector2(
+                    random.randint(0, self.width),
+                    random.randint(0, self.height)
+                )
+                # Check if the new point is far enough from current position
+                if (new_target - self.enemy_tank.position).length() >= 500:
+                    self.enemy_target = new_target
+                    break
 
         self.enemy_tank.aim_turret_at(self.player_tank.position)
+
+        # Handle enemy shooting
+        current_time = pygame.time.get_ticks()
+        if current_time >= self.enemy_next_shot and self.enemy_tank.health > 0:
+            new_projectile = self.enemy_tank.shoot()
+            if new_projectile:
+                self.projectiles.append(new_projectile)
+            self.enemy_next_shot = current_time + random.randint(2000, 10000)
 
     def run(self):
         running = True

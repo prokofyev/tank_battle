@@ -185,6 +185,28 @@ class Tank:
 
         return new_projectile
 
+    def shoot(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_shot_time < self.shot_cooldown:
+            return None
+
+        self.fire_sound.play()
+        self.flash_visible = True
+        self.flash_start_time = current_time
+        self.last_shot_time = current_time
+        self.recoil_speed = self.recoil_force
+
+        # Create new projectile at turret position
+        angle_rad = math.radians(-(self.body_angle + self.turret_angle + 90))
+        SHELL_OFFSET = 60
+        shell_pos = self.position + pygame.math.Vector2(
+            SHELL_OFFSET * math.cos(angle_rad),
+            SHELL_OFFSET * math.sin(angle_rad)
+        )
+        return Projectile(shell_pos.x, shell_pos.y, 
+                         self.body_angle + self.turret_angle + 90,
+                         self.current_speed, self.body_angle)
+
     def handle_screen_wrap(self, screen_width, screen_height):
         if self.position.x > screen_width:
             self.position.x = 0
